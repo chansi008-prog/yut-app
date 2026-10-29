@@ -288,6 +288,10 @@
       <button data-m="1.5">×1.5</button><button data-m="2">×2</button><button data-m="3">×3</button>
     </div>
     <div class="toggle" style="padding-top:10px;border:0"><small>던지기 버튼을 누르고 있으면 바늘이 왔다 갔다 해요. 놓는 순간 바늘이 있는 칸의 결과가 이만큼 잘 나와요.</small></div>
+    <h2 style="margin-top:14px">바늘 속도</h2>
+    <div class="seg" id="speedSeg">
+      <button data-s="1500">천천히</button><button data-s="1000">보통</button><button data-s="650">빠르게</button>
+    </div>
   </div>
 
   <button class="big-btn" id="startBtn">시작하기</button>
@@ -426,6 +430,7 @@ let cfg = store.get("yut.cfg", null) || {
   count: 2, pieces: 4, back: true, nak: true, mult: 1.5,
 };
 cfg.mult ||= 1.5;
+cfg.sweep ||= 1000;
 fixAnimals(cfg.teams);
 let sound = store.get("yut.sound", true);
 let G = null;                       // 진행 중인 판
@@ -473,6 +478,7 @@ function renderSetup() {
       </div>
     </div>`).join("");
   document.querySelectorAll("#pieceSeg button").forEach(b => b.classList.toggle("on", +b.dataset.n === cfg.pieces));
+  document.querySelectorAll("#speedSeg button").forEach(b => b.classList.toggle("on", +b.dataset.s === cfg.sweep));
   document.querySelectorAll("#multSeg button").forEach(b => b.classList.toggle("on", +b.dataset.m === cfg.mult));
   $("#ruleBack").classList.toggle("on", cfg.back);
   $("#ruleNak").classList.toggle("on", cfg.nak);
@@ -493,6 +499,7 @@ $("#teamRows").addEventListener("input", e => {
   if (e.target.matches("input")) { cfg.teams[+e.target.dataset.i].name = e.target.value; saveCfg(); }
 });
 $("#pieceSeg").onclick = e => { const b = e.target.closest("button"); if (b) { cfg.pieces = +b.dataset.n; saveCfg(); renderSetup(); } };
+$("#speedSeg").onclick = e => { const b = e.target.closest("button"); if (b) { cfg.sweep = +b.dataset.s; saveCfg(); renderSetup(); } };
 $("#multSeg").onclick = e => { const b = e.target.closest("button"); if (b) { cfg.mult = +b.dataset.m; saveCfg(); renderSetup(); } };
 $("#ruleBack").onclick = () => { cfg.back = !cfg.back; saveCfg(); renderSetup(); };
 $("#ruleNak").onclick = () => { cfg.nak = !cfg.nak; saveCfg(); renderSetup(); };
@@ -523,7 +530,7 @@ function newGame() {
   const teams = cfg.teams.slice(0, cfg.count).map((t, i) => ({
     name: (t.name || "").trim() || DEFAULT_NAMES[i], animal: t.animal, ai: t.ai, color: TEAM_COLORS[i],
   }));
-  G = { teams, rules: { back: cfg.back, nak: cfg.nak, mult: cfg.mult }, pieces: [], turn: 0, throwsLeft: 1, results: [], over: false, winner: null, sticks: null };
+  G = { teams, rules: { back: cfg.back, nak: cfg.nak, mult: cfg.mult, sweep: cfg.sweep }, pieces: [], turn: 0, throwsLeft: 1, results: [], over: false, winner: null, sticks: null };
   teams.forEach((_, t) => { for (let i = 0; i < cfg.pieces; i++) G.pieces.push({ id: `${t}-${i}`, team: t, pos: WAIT, hist: [] }); });
   enterGame();
   showTurnPop();
@@ -570,7 +577,7 @@ function planMove(t, g, v) { const l = leadOf(t, g); return simulate(l.pos, l.hi
 /* ════════ 던지기 게이지 ════════
    버튼을 누르고 있는 동안 바늘이 0→100→0 으로 왔다 갔다 한다.
    놓는 순간 바늘이 있는 구역의 결과가 G.rules.mult 배 잘 나온다. */
-const SWEEP_MS = 1500;                 // 0에서 100까지 가는 시간
+const sweepMs = () => (G && G.rules.sweep) || 1000;   // 바늘이 0에서 100까지 가는 시간 (설정: 천천히/보통/빠르게)
 function zones() {
   const z = [
     { from: 0, to: 12, key: G.rules.back ? -1 : 1, label: G.rules.back ? "빽도" : "도", cls: "z-weak" },
@@ -581,7 +588,7 @@ function zones() {
   return z;
 }
 const zoneAt = g => g == null ? null : zones().find(z => g >= z.from && g < z.to + (z.to === 100 ? 1 : 0)) || null;
-const gaugeAt = ms => { const t = (ms % (SWEEP_MS * 2)) / SWEEP_MS; return (t <= 1 ? t : 2 - t) * 100; };
+const gaugeAt = ms => { const S = sweepMs(), t = (ms % (S * 2)) / S; return (t <= 1 ? t : 2 - t) * 100; };
 
 // 기본 확률(윷 4개를 반반으로 던졌을 때): 도 4/16, 개 6/16, 걸 4/16, 윷 1/16, 모 1/16, 그중 빽도는 도의 1/4
 function odds(zone) {
@@ -756,7 +763,7 @@ async function aiStep() {
     ui.busy = true; render();
     const aim = Math.random() < .5 ? [51, 82][Math.floor(Math.random() * 2)] + (Math.random() * 10 - 5) : Math.random() * 88;
     const sweeps = 1 + Math.floor(Math.random() * 2);
-    const total = SWEEP_MS * 2 * sweeps + aim / 100 * SWEEP_MS;
+    const total = sweepMs() * 2 * sweeps + aim / 100 * sweepMs();
     const t0 = performance.now();
     const k = window.__speed || 1;
     for (let e = 0; e < total; e = (performance.now() - t0) / k) { renderGauge(gaugeAt(e)); await new Promise(r => setTimeout(r, 16)); }
