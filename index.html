@@ -390,11 +390,11 @@ const YUT_NAME = { "-1": "빽도", 1: "도", 2: "개", 3: "걸", 4: "윷", 5: "�
 const TEAM_COLORS = ["#F0675F", "#5B8DEF", "#4DB37E", "#F2B630"];
 // 말 그림: Microsoft Fluent Emoji 3D (MIT 라이선스), animals/ 폴더
 // 헬멧(레이싱 드라이버용)은 Fluent에 없어 같은 느낌으로 직접 그림 (scratchpad fluent/helmet.py)
-// 진돗개(흰색)는 여우 얼굴을, 뱅갈 고양이(이마 줄무늬)는 고양이 얼굴을 다시 칠한 것 (scratchpad breeds.py)
+// 뱅갈 고양이(이마 줄무늬)는 고양이 얼굴을 다시 칠한 것 (scratchpad breeds.py)
 // 12지 순서대로, 그다음 다른 동물들
 const ZODIAC = [
   ["mouse", "쥐"], ["cow", "소"], ["tiger", "호랑이"], ["rabbit", "토끼"], ["dragon", "용"], ["snake", "뱀"],
-  ["horse", "말"], ["sheep", "양"], ["monkey", "원숭이"], ["rooster", "닭"], ["jindo", "진돗개"], ["pig", "돼지"],
+  ["horse", "말"], ["sheep", "양"], ["monkey", "원숭이"], ["rooster", "닭"], ["dog", "강아지"], ["pig", "돼지"],
 ];
 const OTHERS = [
   ["bengal", "고양이"], ["fox", "여우"], ["bear", "곰"], ["panda", "판다"], ["chick", "병아리"],
@@ -403,17 +403,16 @@ const OTHERS = [
 ];
 const ANIMALS = [...ZODIAC, ...OTHERS];
 const ANIMAL_NAME = Object.fromEntries(ANIMALS);
-const OLD_EMOJI = { "🐯": "tiger", "🐰": "rabbit", "🐶": "jindo", "🐱": "bengal", "🐻": "bear", "🐼": "panda", "🐷": "pig", "🐸": "frog", "🐥": "chick", "🐮": "cow" };
+const OLD_EMOJI = { "🐯": "tiger", "🐰": "rabbit", "🐶": "dog", "🐱": "bengal", "🐻": "bear", "🐼": "panda", "🐷": "pig", "🐸": "frog", "🐥": "chick", "🐮": "cow" };
 const ani = (k, cls = "ani") => `<img class="${cls}" src="animals/${k}.png" alt="${ANIMAL_NAME[k] || ""}" draggable="false">`;
 const darken = hex => { const n = parseInt(hex.slice(1), 16), f = v => Math.round(v * .72); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; };
 function fixAnimals(teams) { teams.forEach((t, i) => {
-  if (t.animal === "dog" || t.emoji === "🐶") { t.animal = "jindo"; if (t.name === "강아지") t.name = "진돗개"; }
+  if (t.animal === "jindo" || t.animal === "baekgu") { t.animal = "dog"; if (t.name === "진돗개" || t.name === "백구") t.name = "강아지"; }
   if (t.animal === "cat") t.animal = "bengal";
-  if (t.animal === "baekgu") t.animal = "jindo";
   if (t.name === "생쥐" && t.animal === "mouse") t.name = "쥐";
   if (t.name === "젖소" && t.animal === "cow") t.name = "소"; if (!ANIMAL_NAME[t.animal]) t.animal = OLD_EMOJI[t.emoji] || DEFAULT_ANIMALS[i]; delete t.emoji; }); }
-const DEFAULT_NAMES = ["호랑이", "토끼", "진돗개", "고양이"];
-const DEFAULT_ANIMALS = ["tiger", "rabbit", "jindo", "bengal"];
+const DEFAULT_NAMES = ["호랑이", "토끼", "강아지", "고양이"];
+const DEFAULT_ANIMALS = ["tiger", "rabbit", "dog", "bengal"];
 
 /* ════════ 저장 ════════ */
 const store = {
