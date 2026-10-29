@@ -1,6 +1,6 @@
 {
-  "name": "윷놀이 한판",
-  "short_name": "윷놀이",
+  "name": "윷판",
+  "short_name": "윷판",
   "description": "태블릿을 돌려 가며, 또는 컴퓨터와 함께 하는 윷놀이",
   "lang": "ko",
   "start_url": "./",
