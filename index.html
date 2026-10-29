@@ -64,8 +64,6 @@
   .animal-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
   .animal-grid button { border-radius: 18px; padding: 8px 4px 6px; background: var(--bg); display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 15px; }
   .animal-grid button img { width: min(64px, 100%); height: auto; aspect-ratio: 1; }
-  .grid-title { font-size: 16px; color: var(--soft); margin: 14px 2px 8px; }
-  .grid-title:first-of-type { margin-top: 0; }
   .animal-grid button.on { background: var(--card); box-shadow: inset 0 0 0 3px var(--c); }
   .animal-grid button:disabled { opacity: .3; }
   .team-row input { flex: 1; min-width: 110px; height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 0 12px; background: var(--bg); font-size: 18px; outline: none; }
@@ -507,8 +505,7 @@ function pickAnimal(i) {
   const grid = list => `<div class="animal-grid" style="--c:${TEAM_COLORS[i]}">
     ${list.map(([k, n]) => `<button data-k="${k}" class="${k === t.animal ? "on" : ""}" ${k !== t.animal && used.includes(k) ? "disabled" : ""}>${ani(k)}${n}</button>`).join("")}</div>`;
   openSheet(`<div class="sheet"><h3>${i + 1}팀 말 고르기</h3>
-    <div class="grid-title">12지</div>${grid(ZODIAC)}
-    <div class="grid-title">다른 말</div>${grid(OTHERS)}
+    ${grid(ANIMALS)}
     <button class="ghost-btn" data-close>닫기</button></div>`);
   $("#overlay .sheet").onclick = e => {
     if (e.target.closest("[data-close]")) return closeSheet();
