@@ -61,7 +61,7 @@
   .emoji-btn { position: relative; width: 52px; height: 52px; flex: none; border-radius: 50%; display: grid; place-items: center; padding: 6px;
     background: radial-gradient(circle at 50% 35%, #fff, #FFF1DA); box-shadow: inset 0 0 0 3.5px var(--c), 0 3px 0 rgba(59,42,30,.12); }
   .emoji-btn::after { content: "바꾸기"; position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); font-size: 10px; background: var(--ink); color: #fff; border-radius: 6px; padding: 0 4px; line-height: 15px; white-space: nowrap; }
-  .animal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
+  .animal-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
   .animal-grid button { border-radius: 18px; padding: 8px 4px 6px; background: var(--bg); display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 15px; }
   .animal-grid button img { width: min(64px, 100%); height: auto; aspect-ratio: 1; }
   .grid-title { font-size: 16px; color: var(--soft); margin: 14px 2px 8px; }
@@ -391,6 +391,7 @@ function distToGoal(pos, hist) { return simulate(pos, hist, 40).path.length; }
 const YUT_NAME = { "-1": "빽도", 1: "도", 2: "개", 3: "걸", 4: "윷", 5: "모" };
 const TEAM_COLORS = ["#F0675F", "#5B8DEF", "#4DB37E", "#F2B630"];
 // 말 그림: Microsoft Fluent Emoji 3D (MIT 라이선스), animals/ 폴더
+// 헬멧(레이싱 드라이버용)은 Fluent에 없어 같은 느낌으로 직접 그림 (scratchpad fluent/helmet.py)
 // 진돗개(흰색)는 여우 얼굴을, 뱅갈 고양이(이마 줄무늬)는 고양이 얼굴을 다시 칠한 것 (scratchpad breeds.py)
 // 12지 순서대로, 그다음 다른 동물들
 const ZODIAC = [
@@ -400,6 +401,7 @@ const ZODIAC = [
 const OTHERS = [
   ["bengal", "고양이"], ["fox", "여우"], ["bear", "곰"], ["panda", "판다"], ["chick", "병아리"],
   ["frog", "개구리"], ["koala", "코알라"], ["hamster", "햄스터"], ["penguin", "펭귄"], ["lion", "사자"],
+  ["soccer", "축구공"], ["helmet", "헬멧"],
 ];
 const ANIMALS = [...ZODIAC, ...OTHERS];
 const ANIMAL_NAME = Object.fromEntries(ANIMALS);
@@ -506,7 +508,7 @@ function pickAnimal(i) {
     ${list.map(([k, n]) => `<button data-k="${k}" class="${k === t.animal ? "on" : ""}" ${k !== t.animal && used.includes(k) ? "disabled" : ""}>${ani(k)}${n}</button>`).join("")}</div>`;
   openSheet(`<div class="sheet"><h3>${i + 1}팀 말 고르기</h3>
     <div class="grid-title">12지</div>${grid(ZODIAC)}
-    <div class="grid-title">다른 동물</div>${grid(OTHERS)}
+    <div class="grid-title">다른 말</div>${grid(OTHERS)}
     <button class="ghost-btn" data-close>닫기</button></div>`);
   $("#overlay .sheet").onclick = e => {
     if (e.target.closest("[data-close]")) return closeSheet();
