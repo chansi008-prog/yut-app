@@ -1,6 +1,6 @@
 // 윷놀이 한판 서비스 워커: 앱 파일을 저장해 두어 인터넷이 약한 모임 장소에서도 열리게 한다
-const VERSION = "yut-v3";
-const CORE = ["./", "index.html", "manifest.webmanifest", ...["tiger","rabbit","jindo","bengal","baekgu","bear","panda","pig","chick","frog","cow","koala","hamster","mouse","penguin","lion"].map(k => `animals/${k}.png`), "icons/icon-192-v1.png", "icons/icon-512-v1.png", "icons/apple-touch-icon-v1.png"];
+const VERSION = "yut-v4";
+const CORE = ["./", "index.html", "manifest.webmanifest", ...["tiger","rabbit","jindo","bengal","bear","panda","fox","pig","chick","frog","cow","koala","hamster","mouse","penguin","lion"].map(k => `animals/${k}.png`), "icons/icon-192-v1.png", "icons/icon-512-v1.png", "icons/apple-touch-icon-v1.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE.map(u => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));

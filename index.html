@@ -389,11 +389,10 @@ function distToGoal(pos, hist) { return simulate(pos, hist, 40).path.length; }
 const YUT_NAME = { "-1": "빽도", 1: "도", 2: "개", 3: "걸", 4: "윷", 5: "모" };
 const TEAM_COLORS = ["#F0675F", "#5B8DEF", "#4DB37E", "#F2B630"];
 // 말 그림: Microsoft Fluent Emoji 3D (MIT 라이선스), animals/ 폴더
-// 진돗개·백구는 여우 얼굴을, 뱅갈 고양이는 고양이 얼굴을 다시 칠한 것 (scratchpad breeds.py)
+// 진돗개(흰색)는 여우 얼굴을, 뱅갈 고양이(이마 줄무늬)는 고양이 얼굴을 다시 칠한 것 (scratchpad breeds.py)
 const ANIMALS = [
   ["tiger", "호랑이"], ["rabbit", "토끼"], ["jindo", "진돗개"], ["bengal", "고양이"],
-  ["baekgu", "백구"],
-  ["bear", "곰"], ["panda", "판다"], ["pig", "돼지"],
+  ["bear", "곰"], ["panda", "판다"], ["fox", "여우"], ["pig", "돼지"],
   ["chick", "병아리"], ["frog", "개구리"], ["cow", "젖소"], ["koala", "코알라"],
   ["hamster", "햄스터"], ["mouse", "생쥐"], ["penguin", "펭귄"], ["lion", "사자"],
 ];
@@ -404,7 +403,7 @@ const darken = hex => { const n = parseInt(hex.slice(1), 16), f = v => Math.roun
 function fixAnimals(teams) { teams.forEach((t, i) => {
   if (t.animal === "dog" || t.emoji === "🐶") { t.animal = "jindo"; if (t.name === "강아지") t.name = "진돗개"; }
   if (t.animal === "cat") t.animal = "bengal";
-  if (t.animal === "fox") t.animal = "jindo"; if (!ANIMAL_NAME[t.animal]) t.animal = OLD_EMOJI[t.emoji] || ANIMALS[i][0]; delete t.emoji; }); }
+  if (t.animal === "baekgu") t.animal = "jindo"; if (!ANIMAL_NAME[t.animal]) t.animal = OLD_EMOJI[t.emoji] || ANIMALS[i][0]; delete t.emoji; }); }
 const DEFAULT_NAMES = ["호랑이", "토끼", "진돗개", "고양이"];
 
 /* ════════ 저장 ════════ */
