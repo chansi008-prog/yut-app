@@ -64,6 +64,8 @@
   .animal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
   .animal-grid button { border-radius: 18px; padding: 8px 4px 6px; background: var(--bg); display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 15px; }
   .animal-grid button img { width: min(64px, 100%); height: auto; aspect-ratio: 1; }
+  .grid-title { font-size: 16px; color: var(--soft); margin: 14px 2px 8px; }
+  .grid-title:first-of-type { margin-top: 0; }
   .animal-grid button.on { background: var(--card); box-shadow: inset 0 0 0 3px var(--c); }
   .animal-grid button:disabled { opacity: .3; }
   .team-row input { flex: 1; min-width: 110px; height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 0 12px; background: var(--bg); font-size: 18px; outline: none; }
@@ -390,12 +392,16 @@ const YUT_NAME = { "-1": "빽도", 1: "도", 2: "개", 3: "걸", 4: "윷", 5: "�
 const TEAM_COLORS = ["#F0675F", "#5B8DEF", "#4DB37E", "#F2B630"];
 // 말 그림: Microsoft Fluent Emoji 3D (MIT 라이선스), animals/ 폴더
 // 진돗개(흰색)는 여우 얼굴을, 뱅갈 고양이(이마 줄무늬)는 고양이 얼굴을 다시 칠한 것 (scratchpad breeds.py)
-const ANIMALS = [
-  ["tiger", "호랑이"], ["rabbit", "토끼"], ["jindo", "진돗개"], ["bengal", "고양이"],
-  ["bear", "곰"], ["panda", "판다"], ["fox", "여우"], ["pig", "돼지"],
-  ["chick", "병아리"], ["frog", "개구리"], ["cow", "젖소"], ["koala", "코알라"],
-  ["hamster", "햄스터"], ["mouse", "생쥐"], ["penguin", "펭귄"], ["lion", "사자"],
+// 12지 순서대로, 그다음 다른 동물들
+const ZODIAC = [
+  ["mouse", "쥐"], ["cow", "소"], ["tiger", "호랑이"], ["rabbit", "토끼"], ["dragon", "용"], ["snake", "뱀"],
+  ["horse", "말"], ["sheep", "양"], ["monkey", "원숭이"], ["rooster", "닭"], ["jindo", "진돗개"], ["pig", "돼지"],
 ];
+const OTHERS = [
+  ["bengal", "고양이"], ["fox", "여우"], ["bear", "곰"], ["panda", "판다"], ["chick", "병아리"],
+  ["frog", "개구리"], ["koala", "코알라"], ["hamster", "햄스터"], ["penguin", "펭귄"], ["lion", "사자"],
+];
+const ANIMALS = [...ZODIAC, ...OTHERS];
 const ANIMAL_NAME = Object.fromEntries(ANIMALS);
 const OLD_EMOJI = { "🐯": "tiger", "🐰": "rabbit", "🐶": "jindo", "🐱": "bengal", "🐻": "bear", "🐼": "panda", "🐷": "pig", "🐸": "frog", "🐥": "chick", "🐮": "cow" };
 const ani = (k, cls = "ani") => `<img class="${cls}" src="animals/${k}.png" alt="${ANIMAL_NAME[k] || ""}" draggable="false">`;
@@ -403,8 +409,11 @@ const darken = hex => { const n = parseInt(hex.slice(1), 16), f = v => Math.roun
 function fixAnimals(teams) { teams.forEach((t, i) => {
   if (t.animal === "dog" || t.emoji === "🐶") { t.animal = "jindo"; if (t.name === "강아지") t.name = "진돗개"; }
   if (t.animal === "cat") t.animal = "bengal";
-  if (t.animal === "baekgu") t.animal = "jindo"; if (!ANIMAL_NAME[t.animal]) t.animal = OLD_EMOJI[t.emoji] || ANIMALS[i][0]; delete t.emoji; }); }
+  if (t.animal === "baekgu") t.animal = "jindo";
+  if (t.name === "생쥐" && t.animal === "mouse") t.name = "쥐";
+  if (t.name === "젖소" && t.animal === "cow") t.name = "소"; if (!ANIMAL_NAME[t.animal]) t.animal = OLD_EMOJI[t.emoji] || DEFAULT_ANIMALS[i]; delete t.emoji; }); }
 const DEFAULT_NAMES = ["호랑이", "토끼", "진돗개", "고양이"];
+const DEFAULT_ANIMALS = ["tiger", "rabbit", "jindo", "bengal"];
 
 /* ════════ 저장 ════════ */
 const store = {
@@ -414,7 +423,7 @@ const store = {
 };
 
 let cfg = store.get("yut.cfg", null) || {
-  teams: [0, 1, 2, 3].map(i => ({ name: DEFAULT_NAMES[i], animal: ANIMALS[i][0], ai: false })),
+  teams: [0, 1, 2, 3].map(i => ({ name: DEFAULT_NAMES[i], animal: DEFAULT_ANIMALS[i], ai: false })),
   count: 2, pieces: 4, back: true, nak: true, mult: 1.5,
 };
 cfg.mult ||= 1.5;
@@ -493,9 +502,12 @@ $("#resumeBtn").onclick = () => { G = store.get("yut.game", null); if (G) { fixA
 $("#rulesLink").onclick = () => showRules();
 function pickAnimal(i) {
   const t = cfg.teams[i], used = cfg.teams.slice(0, cfg.count).map(x => x.animal);
-  openSheet(`<div class="sheet"><h3>${i + 1}팀 말 고르기</h3><div class="animal-grid" style="--c:${TEAM_COLORS[i]}">
-    ${ANIMALS.map(([k, n]) => `<button data-k="${k}" class="${k === t.animal ? "on" : ""}" ${k !== t.animal && used.includes(k) ? "disabled" : ""}>${ani(k)}${n}</button>`).join("")}
-    </div><button class="ghost-btn" data-close>닫기</button></div>`);
+  const grid = list => `<div class="animal-grid" style="--c:${TEAM_COLORS[i]}">
+    ${list.map(([k, n]) => `<button data-k="${k}" class="${k === t.animal ? "on" : ""}" ${k !== t.animal && used.includes(k) ? "disabled" : ""}>${ani(k)}${n}</button>`).join("")}</div>`;
+  openSheet(`<div class="sheet"><h3>${i + 1}팀 말 고르기</h3>
+    <div class="grid-title">12지</div>${grid(ZODIAC)}
+    <div class="grid-title">다른 동물</div>${grid(OTHERS)}
+    <button class="ghost-btn" data-close>닫기</button></div>`);
   $("#overlay .sheet").onclick = e => {
     if (e.target.closest("[data-close]")) return closeSheet();
     const b = e.target.closest("[data-k]");
