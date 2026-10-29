@@ -389,18 +389,23 @@ function distToGoal(pos, hist) { return simulate(pos, hist, 40).path.length; }
 const YUT_NAME = { "-1": "빽도", 1: "도", 2: "개", 3: "걸", 4: "윷", 5: "모" };
 const TEAM_COLORS = ["#F0675F", "#5B8DEF", "#4DB37E", "#F2B630"];
 // 말 그림: Microsoft Fluent Emoji 3D (MIT 라이선스), animals/ 폴더
+// 진돗개·백구는 여우 얼굴을, 뱅갈 고양이는 고양이 얼굴을 다시 칠한 것 (scratchpad breeds.py)
 const ANIMALS = [
-  ["tiger", "호랑이"], ["rabbit", "토끼"], ["dog", "강아지"], ["cat", "고양이"],
-  ["bear", "곰"], ["panda", "판다"], ["fox", "여우"], ["pig", "돼지"],
+  ["tiger", "호랑이"], ["rabbit", "토끼"], ["jindo", "진돗개"], ["bengal", "고양이"],
+  ["baekgu", "백구"],
+  ["bear", "곰"], ["panda", "판다"], ["pig", "돼지"],
   ["chick", "병아리"], ["frog", "개구리"], ["cow", "젖소"], ["koala", "코알라"],
   ["hamster", "햄스터"], ["mouse", "생쥐"], ["penguin", "펭귄"], ["lion", "사자"],
 ];
 const ANIMAL_NAME = Object.fromEntries(ANIMALS);
-const OLD_EMOJI = { "🐯": "tiger", "🐰": "rabbit", "🐶": "dog", "🐱": "cat", "🐻": "bear", "🐼": "panda", "🦊": "fox", "🐷": "pig", "🐸": "frog", "🐥": "chick", "🐮": "cow" };
+const OLD_EMOJI = { "🐯": "tiger", "🐰": "rabbit", "🐶": "jindo", "🐱": "bengal", "🐻": "bear", "🐼": "panda", "🐷": "pig", "🐸": "frog", "🐥": "chick", "🐮": "cow" };
 const ani = (k, cls = "ani") => `<img class="${cls}" src="animals/${k}.png" alt="${ANIMAL_NAME[k] || ""}" draggable="false">`;
 const darken = hex => { const n = parseInt(hex.slice(1), 16), f = v => Math.round(v * .72); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; };
-function fixAnimals(teams) { teams.forEach((t, i) => { if (!ANIMAL_NAME[t.animal]) t.animal = OLD_EMOJI[t.emoji] || ANIMALS[i][0]; delete t.emoji; }); }
-const DEFAULT_NAMES = ["호랑이", "토끼", "강아지", "고양이"];
+function fixAnimals(teams) { teams.forEach((t, i) => {
+  if (t.animal === "dog" || t.emoji === "🐶") { t.animal = "jindo"; if (t.name === "강아지") t.name = "진돗개"; }
+  if (t.animal === "cat") t.animal = "bengal";
+  if (t.animal === "fox") t.animal = "jindo"; if (!ANIMAL_NAME[t.animal]) t.animal = OLD_EMOJI[t.emoji] || ANIMALS[i][0]; delete t.emoji; }); }
+const DEFAULT_NAMES = ["호랑이", "토끼", "진돗개", "고양이"];
 
 /* ════════ 저장 ════════ */
 const store = {
@@ -711,9 +716,11 @@ async function doMove(ri, g) {
     const mates = stackAt(t, dest);
     if (foes.length) {
       foes.forEach(p => { p.pos = WAIT; p.hist = []; });
-      G.throwsLeft++;
+      // 윷·모로 잡으면 이미 한 번 더 던졌으니 잡은 보너스는 없다
+      const bonus = v !== 4 && v !== 5;
+      if (bonus) G.throwsLeft++;
       sfx.catch(); buzz([40, 40, 80]);
-      pop("잡았다!", "한 번 더!");
+      pop("잡았다!", bonus ? "한 번 더!" : `${YUT_NAME[v]}로 잡아서 추가 던지기는 없어요`);
     } else if (mates.length > movers.length) {
       mates.forEach(p => p.hist = [...plan.hist]);
       sfx.good(); pop("업었다!", `${mates.length}개 함께`);
@@ -774,7 +781,7 @@ function evalMove(t, g, v) {
   let s = (distToGoal(lead.pos, lead.hist) - distToGoal(plan.dest, plan.hist)) * 3 * n;
   const foes = G.pieces.filter(p => p.team !== t && p.pos === plan.dest).length;
   const mates = stackAt(t, plan.dest).length;
-  if (foes) s += 90 + 25 * foes;
+  if (foes) s += (v === 4 || v === 5 ? 60 : 90) + 25 * foes;
   if (mates) s += 18;
   if ([5, 10, 22].includes(plan.dest)) s += 12;
   if (!foes && threatened(plan.dest, t)) s -= 40 * (n + mates);
@@ -1085,6 +1092,7 @@ function showRules() {
     <p>윷이나 모가 나오면 계속 던지고, 다 던진 뒤 나온 결과를 원하는 순서로 말에 나눠 써요.</p>
     <h4>잡기 · 업기</h4>
     <ul><li>상대 말이 있는 칸에 멈추면 잡아서 처음으로 돌려보내고, 한 번 더 던져요.</li>
+    <li>단, 윷이나 모로 잡았을 때는 이미 한 번 더 던졌으니 잡은 보너스는 없어요.</li>
     <li>내 말끼리 같은 칸에 멈추면 업어서 함께 움직여요. 잡히면 같이 잡혀요.</li></ul>
     <h4>지름길</h4>
     <p>모서리나 가운데 방에 <b>멈추면</b> 다음 차례에 대각선 지름길로 가요. 가운데 방에서는 출발점 쪽으로 가장 빨리 나가요.</p>
