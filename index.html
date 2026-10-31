@@ -1177,6 +1177,13 @@ function confetti(color) {
 renderSetup();
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  // 새 버전을 받으면 설정 화면일 때 한 번 새로고침해서 바로 보이게 한다 (게임 중이면 다음에 열 때)
+  const hadSW = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadSW || reloaded || G) return;          // G가 있으면 게임 중
+    reloaded = true; location.reload();
+  });
 }
 </script>
 </body>
