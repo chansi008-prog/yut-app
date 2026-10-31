@@ -105,6 +105,7 @@
   @media (min-width: 700px) and (orientation: portrait) {
     .side { display: grid; grid-template-columns: 1.15fr 1fr; align-items: start; }
     .side .topbar { grid-column: 1 / -1; }
+    .side .rankbar { grid-column: 1 / -1; }
     .game-grid .board-wrap { width: min(100%, calc(100dvh - 520px)); margin: 0 auto; }
   }
   @media (min-width: 760px) and (orientation: landscape) {
@@ -219,6 +220,14 @@
   .tcard .goal { font-size: 13px; color: var(--soft); }
   .tcard .goal b { color: var(--ink); font-weight: 400; }
 
+  /* 지금 순위: 숫자 + 그림만 작게 */
+  .rankbar { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; }
+  .rk { display: inline-flex; align-items: center; gap: 2px; padding: 2px 8px 2px 4px; border-radius: 999px; background: var(--card); box-shadow: 0 2px 0 var(--line); font-size: 17px; line-height: 1; }
+  .rk b { font-weight: 400; min-width: 16px; text-align: center; color: var(--soft); }
+  .rk img { width: 28px; height: 28px; }
+  .rk.top { background: #FFF1C9; }
+  .rk.top b { color: #B07A00; }
+
   /* ───── 시트 / 오버레이 ───── */
   .scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 100; display: flex; align-items: flex-end; justify-content: center; animation: fadeIn .2s; }
   .scrim.center { align-items: center; padding: 16px; }
@@ -315,6 +324,8 @@
         <button class="icon-btn" id="menuBtn" aria-label="메뉴">☰</button>
       </div>
 
+      <div class="rankbar" id="rankbar"></div>
+
       <div class="mat">
         <div class="mat-title"><span class="left">윷판</span><span id="multTag"></span></div>
         <div class="sticks" id="sticks"></div>
@@ -392,7 +403,7 @@ function distToGoal(pos, hist) { return simulate(pos, hist, 40).path.length; }
 
 const YUT_NAME = { "-1": "빽도", 1: "도", 2: "개", 3: "걸", 4: "윷", 5: "모" };
 const TEAM_COLORS = ["#F0675F", "#5B8DEF", "#4DB37E", "#F2B630"];
-// 말 그림: Microsoft Fluent Emoji 3D (MIT 라이선스), animals/ 폴더
+// 말 그림: Microsoft Fluent Emoji 3D (MIT 라이선스), animals/ 폴더. 소는 황소를 빨갛게 칠하고 노란 해를 더함 (scratchpad fluent/bull.py)
 // 헬멧(레이싱 드라이버용)은 Fluent에 없어 같은 느낌으로 직접 그림 (scratchpad fluent/helmet.py)
 // 뱅갈 고양이(이마 줄무늬)는 고양이 얼굴을 다시 칠한 것 (scratchpad breeds.py)
 // 12지 순서대로, 그다음 다른 동물들
@@ -754,7 +765,7 @@ async function doMove(ri, g) {
 /* ════════ 컴퓨터 ════════ */
 function scheduleAI() {
   clearTimeout(ui.aiTimer);
-  if (isAI()) ui.aiTimer = setTimeout(aiStep, 800);
+  if (isAI()) ui.aiTimer = setTimeout(aiStep, 350);
 }
 async function aiStep() {
   if (!isAI() || ui.busy) return;
@@ -762,8 +773,7 @@ async function aiStep() {
     // 컴퓨터도 게이지를 누른다: 반쯤은 윷·모 구역을 노리고, 나머지는 아무 데나
     ui.busy = true; render();
     const aim = Math.random() < .5 ? [51, 82][Math.floor(Math.random() * 2)] + (Math.random() * 10 - 5) : Math.random() * 88;
-    const sweeps = 1 + Math.floor(Math.random() * 2);
-    const total = sweepMs() * 2 * sweeps + aim / 100 * sweepMs();
+    const total = (aim / 100 + (Math.random() < .3 ? 2 : 0)) * sweepMs();   // 대개 한 번에, 가끔 한 바퀴 더
     const t0 = performance.now();
     const k = window.__speed || 1;
     for (let e = 0; e < total; e = (performance.now() - t0) / k) { renderGauge(gaugeAt(e)); await new Promise(r => setTimeout(r, 16)); }
@@ -774,7 +784,7 @@ async function aiStep() {
   const m = aiChoose();
   if (!m) return;
   ui.sel = m.ri; ui.group = m.g; render();
-  await sleep(700);
+  await sleep(350);
   await doMove(m.ri, m.g);
 }
 function threatened(pos, t) {
@@ -950,6 +960,8 @@ function render(keepMsg) {
   else if (choices.includes(WAIT)) { btn.textContent = "새 말 올리기"; btn.disabled = false; }
   else { btn.textContent = "말을 골라 주세요"; btn.disabled = true; }
 
+  renderRank();
+
   // 팀 카드
   const tw = $("#teams");
   tw.style.setProperty("--n", G.teams.length);
@@ -968,6 +980,18 @@ function render(keepMsg) {
       <div class="wait">${minis}</div>
       <div class="goal">골인 <b>${done}</b>/${ps.length}</div></div>`;
   }).join("");
+}
+// 지금 순위: 골인한 말이 많을수록, 같으면 남은 칸이 적을수록 앞. 똑같으면 같은 등수
+function standings() {
+  const arr = G.teams.map((tm, t) => {
+    const ps = piecesOf(t);
+    return { t, tm, done: ps.filter(p => p.pos === GOAL).length, dist: ps.reduce((a, p) => a + (p.pos === GOAL ? 0 : distToGoal(p.pos, p.hist)), 0) };
+  }).sort((a, b) => b.done - a.done || a.dist - b.dist);
+  arr.forEach((r, i) => { const q = arr[i - 1]; r.rank = q && q.done === r.done && q.dist === r.dist ? q.rank : i + 1; });
+  return arr;
+}
+function renderRank() {
+  $("#rankbar").innerHTML = standings().map(r => `<span class="rk ${r.rank === 1 ? "top" : ""}" title="${esc(r.tm.name)}"><b>${r.rank}</b>${ani(r.tm.animal)}</span>`).join("");
 }
 function setMsg(h) { $("#msg").innerHTML = h; }
 

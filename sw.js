@@ -1,5 +1,5 @@
 // 윷판 서비스 워커: 앱 파일을 저장해 두어 인터넷이 약한 모임 장소에서도 열리게 한다
-const VERSION = "yut-v9";
+const VERSION = "yut-v10";
 const CORE = ["./", "index.html", "manifest.webmanifest", ...["tiger","rabbit","dog","bengal","dragon","snake","horse","sheep","monkey","rooster","soccer","helmet","bear","panda","fox","pig","chick","frog","cow","koala","hamster","mouse","penguin","lion"].map(k => `animals/${k}.png`), "icons/icon-192-v1.png", "icons/icon-512-v1.png", "icons/apple-touch-icon-v1.png"];
 
 self.addEventListener("install", e => {
